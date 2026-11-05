@@ -19,4 +19,4 @@ GitHub main is development. production identifies the release uploaded to SiteGr
 
     git archive --format=zip --output=ribbons-siteground.zip production:web
 
-Extract the archive into ribbons.natzke.com/public_html using SiteGround File Manager. The repository is private; the experiences are public. Pushes do not automatically deploy.
+Extract the archive into ribbons.natzke.com/public_html using SiteGround File Manager. The repository and experiences are public. Pushes do not automatically deploy.
