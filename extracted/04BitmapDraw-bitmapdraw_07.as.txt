@@ -1,0 +1,178 @@
+var wind:Number = 0;
+var grav:Number = .05;
+var ground:Number = 700;
+var friction:Number = .97;
+var particleNum:Number = 0;
+var particleMax:Number = 25;
+var maxDistance:Number = 100;
+
+var particles:Object = new Object();
+
+var drawLayer:Sprite = new Sprite();
+addChild(drawLayer);
+
+fscommand("fullscreen", "true");
+
+function spawnParticle (event:TimerEvent) {
+	
+	var mag:Number = Math.random()*2;
+	var dir:Number = Math.random()*Math.PI*2;
+	
+	particles["p"+particleNum] = {x:mouseX, y:mouseY,
+									xSpeed:Math.cos(dir)*mag*0, 
+									ySpeed:Math.sin(dir)*mag*0,
+									radius:0,
+									radiusIncrement:Math.random()*2,
+									color:sampleBitmapData.getPixel(mouseX, mouseY)}
+									
+		
+	if (particleNum>=particleMax) {
+		delete particles["p"+(particleNum-particleMax)];
+	}
+	
+	particleNum++;
+		
+		
+}
+
+
+
+function moveParticles (event:TimerEvent){
+	
+	//if (Math.random()<.05) wind = Math.random()*2-1;
+	
+	drawLayer.graphics.clear();
+	//drawLayer.graphics.lineStyle(0, 0xFFFFFF, 1);
+	
+	var min:Number = particleNum-particleMax;
+	if (min<0) min = 0;
+	
+	for (var c=min+1; c<particleNum-1; c++) {
+		
+		var p:Object  = particles["p"+c];
+		var nb:Object = particles["p"+(c+1)];
+		
+		p.xSpeed += wind;
+		p.ySpeed += grav;
+		
+		p.xSpeed *= friction;
+		p.ySpeed *= friction;
+		
+		p.x += p.xSpeed;
+		p.y += p.ySpeed;
+		
+		if (c<min+5) {
+			p.x -= (p.x - nb.x)*.6;
+			p.y -= (p.y - nb.y)*.6;
+		} else {
+			//p.xSpeed -= (p.x - nb.x)*.01;
+			//p.ySpeed -= (p.y - nb.y)*.01;
+			
+		}
+		
+		if (c>particleNum-particleMax*.5) {
+			p.radius += p.radiusIncrement;
+		} else {
+			p.radius *= .85;
+		}
+		
+		
+		
+		if (p.y > ground) {
+			p.y = ground;
+			p.ySpeed *= -1;
+		}
+		
+		var X:Number = p.x - nb.x;
+		var Y:Number = p.y - nb.y;
+		
+		p.Distance = Math.sqrt(X*X+Y*Y);
+		p.Angle = Math.atan2(Y, X);
+		
+		if (p.Distance>maxDistance) {
+			var oldX:Number = p.x;
+			var oldY:Number = p.y;
+			
+			p.x = nb.x + maxDistance * Math.cos(p.Angle);
+			p.y = nb.y + maxDistance * Math.sin(p.Angle);
+			
+			p.xSpeed += (p.x-oldX) * .1;
+			p.ySpeed += (p.y-oldY) * .1;
+
+		}
+		
+	}
+	
+	// Draw line through all the points
+	for (c=particleNum-2; c>min; c--) {
+		
+		p  = particles["p"+c];
+		nb = particles["p"+(c-1)];
+		var nbB:Object = particles["p"+(c+1)];
+		
+		//drawLayer.graphics.lineStyle(p.radius, 0x444444, 1);
+		//drawLayer.graphics.lineStyle(1, 0x999999, 1);
+		
+		var midPointX:Number = p.x + (nb.x-p.x)*.5;
+		var midPointY:Number = p.y + (nb.y-p.y)*.5;
+		
+		if (c == particleNum-2) {
+			drawLayer.graphics.moveTo(p.x, p.y);
+		} else if (c>min+1) {
+
+			//drawLayer.graphics.curveTo(p.x, p.y, midPointX, midPointY);
+
+			var p_a = {x:nbB.x+nbB.radius*Math.cos(nbB.Angle + Math.PI*.5), y:nbB.y+nbB.radius*Math.sin(nbB.Angle + Math.PI*.5)}
+			var p_b = {x:nbB.x-nbB.radius*Math.cos(nbB.Angle + Math.PI*.5), y:nbB.y-nbB.radius*Math.sin(nbB.Angle + Math.PI*.5)}
+			
+			var p_c = {x:p.x+p.radius*Math.cos(p.Angle + Math.PI*.5), y:p.y+p.radius*Math.sin(p.Angle + Math.PI*.5)}
+			var p_d = {x:p.x-p.radius*Math.cos(p.Angle + Math.PI*.5), y:p.y-p.radius*Math.sin(p.Angle + Math.PI*.5)}
+			
+			var p_e = {x:nb.x+nb.radius*Math.cos(nb.Angle + Math.PI*.5), y:nb.y+nb.radius*Math.sin(nb.Angle + Math.PI*.5)}
+			var p_f = {x:nb.x-nb.radius*Math.cos(nb.Angle + Math.PI*.5), y:nb.y-nb.radius*Math.sin(nb.Angle + Math.PI*.5)}
+
+			
+			var p_ac = {x:p_a.x+(p_c.x-p_a.x)*.5, y:p_a.y+(p_c.y-p_a.y)*.5}
+			var p_ce = {x:p_c.x+(p_e.x-p_c.x)*.5, y:p_c.y+(p_e.y-p_c.y)*.5}
+			
+			var p_bd = {x:p_b.x+(p_d.x-p_b.x)*.5, y:p_b.y+(p_d.y-p_b.y)*.5}
+			var p_df = {x:p_d.x+(p_f.x-p_d.x)*.5, y:p_d.y+(p_f.y-p_d.y)*.5}
+			
+			p.color = sampleBitmapData.getPixel(p.x, p.y)
+			p.color2 = sampleBitmapData.getPixel(p_c.x, p_c.y)
+			
+			drawLayer.graphics.lineStyle(1, p.color2, .5);
+			drawLayer.graphics.beginFill(p.color, .25);
+			
+			drawLayer.graphics.moveTo(p_bd.x, p_bd.y);
+			drawLayer.graphics.curveTo(p_d.x, p_d.y, p_df.x, p_df.y);
+			
+			drawLayer.graphics.lineStyle(1, 0x222222, 0);
+			drawLayer.graphics.lineTo(p_ce.x, p_ce.y);
+			
+			drawLayer.graphics.lineStyle(1, p.color2, .5);
+			drawLayer.graphics.curveTo(p_c.x, p_c.y, p_ac.x, p_ac.y);
+			
+			drawLayer.graphics.lineStyle(1, 0x222222, 0);
+			drawLayer.graphics.lineTo(p_bd.x, p_bd.y);
+			drawLayer.graphics.endFill();
+			
+			
+			// End here, so it will pick up here.
+			//drawLayer.graphics.moveTo(midPointX, midPointY);
+			
+			
+		}
+	}
+	
+
+		
+}
+
+var myTimer:Timer = new Timer(1000/10, 0);
+myTimer.addEventListener("timer", spawnParticle);
+myTimer.start();
+
+var myTimerB:Timer = new Timer(1000/30, 0);
+myTimerB.addEventListener("timer", moveParticles);
+myTimerB.start();

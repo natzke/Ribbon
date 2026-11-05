@@ -1,0 +1,21 @@
+
+var particles:Object = new Object();
+
+var particleNum:Number = 0;
+
+function spawnParticle (event:TimerEvent) {
+	
+	var particle:Sprite = new Sprite();
+	
+	particle.graphics.beginFill(0xFFFFFF, 1);
+	particle.graphics.drawCircle(0, 0, 10);
+	particle.graphics.beginFill(0x222222, 1);
+	particle.graphics.drawCircle(0, 0, 8);
+	particle.graphics.endFill();
+	
+	particle.x = mouseX;
+	particle.y = mouseY;
+	
+	addChild(particle);
+	
+	particles["p"+particleNum++] = {x:mouseX, y:

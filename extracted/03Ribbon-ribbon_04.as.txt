@@ -1,0 +1,171 @@
+
+var gravity:Number = .5;
+var wind:Number = 0;
+var airFriction:Number = .97;
+var ground:Number = 700;
+
+var particles:Object = new Object();
+
+var particleNum:Number = 0;
+
+var maxParticles:Number = 25;
+
+var maxDistance:Number = 100;
+
+var drawLayer:Sprite = new Sprite();
+addChild(drawLayer);
+
+function spawnParticle (event:TimerEvent) {
+	
+	var particle:Sprite = new Sprite();
+	
+	particle.graphics.beginFill(0xFFFFFF, 1);
+	particle.graphics.drawCircle(0, 0, 6);
+	particle.graphics.beginFill(0x222222, 1);
+	particle.graphics.drawCircle(0, 0, 5);
+	particle.graphics.endFill();
+	
+	particle.x = mouseX;
+	particle.y = mouseY;
+	
+	addChild(particle);
+	
+	var mag:Number = Math.random()*2;
+	var dir:Number = Math.random()*Math.PI*2;
+	
+	particles["p"+particleNum] = {x:mouseX, y:mouseY, ref:particle,
+									xSpeed:Math.cos(dir)*mag, 
+									ySpeed:Math.sin(dir)*mag,
+									radius:Math.random()*20}
+									
+		
+	if (particleNum>=maxParticles) {
+		removeChild(particles["p"+(particleNum-maxParticles)].ref);
+		delete particles["p"+(particleNum-maxParticles)];
+	}
+	
+	particleNum++;
+		
+		
+}
+
+
+
+function moveParticles (event:TimerEvent){
+	
+	//if (Math.random()<.05) wind = Math.random()*2-1;
+	
+	drawLayer.graphics.clear();
+	drawLayer.graphics.lineStyle(0, 0xFFFFFF, 1);
+	
+	var min:Number = particleNum-maxParticles;
+	if (min<0) min = 0;
+	
+	//trace("particleNum: "+particleNum);
+	//trace("min: "+min);
+	
+	//for (var c=particleNum-1; c>min; c--) {
+	for (var c=min+1; c<particleNum-1; c++) {
+		
+		var p:Object  = particles["p"+c];
+		var nb:Object = particles["p"+(c+1)];
+		
+		p.xSpeed += wind;
+		p.ySpeed += gravity;
+		
+		p.xSpeed *= airFriction;
+		p.ySpeed *= airFriction;
+		
+		p.x += p.xSpeed;
+		p.y += p.ySpeed;
+		
+		if (c>particleNum-maxParticles*.5) {
+			p.radius += .5;
+		} else {
+			p.radius *= .95;
+		}
+		
+		
+		
+		if (p.y > ground) {
+			p.y = ground;
+			p.ySpeed *= -1;
+		}
+		
+		var X:Number = p.x - nb.x;
+		var Y:Number = p.y - nb.y;
+		
+		p.Distance = Math.sqrt(X*X+Y*Y);
+		p.Angle = Math.atan2(Y, X);
+		
+		if (p.Distance>maxDistance) {
+			var oldX:Number = p.x;
+			var oldY:Number = p.y;
+			
+			p.x = nb.x + maxDistance * Math.cos(p.Angle);
+			p.y = nb.y + maxDistance * Math.sin(p.Angle);
+			
+			p.xSpeed += (p.x-oldX) * .1;
+			p.ySpeed += (p.y-oldY) * .1;
+
+		}
+		
+		p.ref.x = p.x;
+		p.ref.y = p.y;
+		
+	}
+	
+	// Draw line through all the points
+	for (c=particleNum-1; c>min; c--) {
+		
+		p  = particles["p"+c];
+		nb = particles["p"+(c-1)];
+		
+		drawLayer.graphics.lineStyle(p.radius, 0x444444, 1);
+		drawLayer.graphics.lineStyle(1, 0x444444, 1);
+		
+		var midPointX:Number = p.x + (nb.x-p.x)*.5;
+		var midPointY:Number = p.y + (nb.y-p.y)*.5;
+		
+		if (c == particleNum-1) {
+			drawLayer.graphics.moveTo(p.x, p.y);
+		} else {
+			
+			//drawLayer.graphics.lineStyle(0, 0xFFFFFF, 1);
+			drawLayer.graphics.curveTo(p.x, p.y, midPointX, midPointY);
+			//drawLayer.graphics.lineTo(midPointX, midPointY);
+			//drawLayer.graphics.lineStyle(p.radius, 0xFF0000, 1);
+			//drawLayer.graphics.lineTo(midPointX+.5, midPointY);
+			
+			drawLayer.graphics.lineStyle(1, 0xff0000, 1);
+
+			var myAngle:Number = p.Angle + Math.PI*.5;
+			drawLayer.graphics.moveTo(p.x+20*Math.cos(myAngle), p.y+20*Math.sin(myAngle));
+			drawLayer.graphics.lineTo(p.x-20*Math.cos(myAngle), p.y-20*Math.sin(myAngle));
+			
+			drawLayer.graphics.lineStyle(3, 0x3399ff, 1);
+			
+			myAngle = nb.Angle + Math.PI*.5;
+			drawLayer.graphics.lineTo(nb.x-20*Math.cos(myAngle), nb.y-20*Math.sin(myAngle));
+			drawLayer.graphics.lineTo(nb.x+20*Math.cos(myAngle), nb.y+20*Math.sin(myAngle));
+			
+			
+			
+			
+			drawLayer.graphics.moveTo(midPointX, midPointY);
+			
+			
+		}
+	}
+	
+
+		
+}
+
+var myTimer:Timer = new Timer(1000/10, 0);
+myTimer.addEventListener("timer", spawnParticle);
+myTimer.start();
+
+var myTimerB:Timer = new Timer(1000/30, 0);
+myTimerB.addEventListener("timer", moveParticles);
+myTimerB.start();

@@ -1,0 +1,68 @@
+
+var gravity:Number = 1;
+var ground:Number = 700;
+
+var particles:Object = new Object();
+
+var particleNum:Number = 0;
+
+var maxParticles:Number = 50;
+
+function spawnParticle (event:TimerEvent) {
+	
+	var particle:Sprite = new Sprite();
+	
+	particle.graphics.beginFill(0xFFFFFF, 1);
+	particle.graphics.drawCircle(0, 0, 10);
+	particle.graphics.beginFill(0x222222, 1);
+	particle.graphics.drawCircle(0, 0, 8);
+	particle.graphics.endFill();
+	
+	particle.x = mouseX;
+	particle.y = mouseY;
+	
+	addChild(particle);
+	
+	particles["p"+particleNum++] = {x:mouseX, y:mouseY, ref:particle,
+									xSpeed:Math.random()*4-2, ySpeed:Math.random()*4-2};
+	
+	if (particleNum>maxParticles) {
+		// Remove Sprite that is being referenced
+		removeChild(particles["p"+(particleNum-maxParticles)].ref);
+		// Delete the particle object
+		delete particles["p"+(particleNum-maxParticles)];
+	}
+		
+		
+}
+
+
+var myTimer:Timer = new Timer(1000/100, 0);
+myTimer.addEventListener("timer", spawnParticle);
+myTimer.start();
+
+function moveParticles (event:TimerEvent){
+	
+	for each (var p in particles) {
+		
+		p.ySpeed += gravity;
+		
+		p.x += p.xSpeed;
+		p.y += p.ySpeed;
+		
+		if (p.y > ground) {
+			p.y = ground;
+			p.ySpeed *= -1;
+		}
+		
+		p.ref.x = p.x;
+		p.ref.y = p.y;
+		
+	}
+		
+}
+
+
+var myTimerB:Timer = new Timer(1000/30, 0);
+myTimerB.addEventListener("timer", moveParticles);
+myTimerB.start();

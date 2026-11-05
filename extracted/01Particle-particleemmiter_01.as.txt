@@ -1,0 +1,6 @@
+
+
+
+function spawnParticle (event:TimerEvent) {
+	
+	var particle:Sprite = new Sprite
